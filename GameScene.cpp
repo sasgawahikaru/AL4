@@ -12,8 +12,8 @@ GameScene::~GameScene()
 	delete spriteBG;
 	delete object3d;
 
-	//delete sprite1;
-	//delete sprite2;
+	delete sprite1;
+	delete sprite2;
 }
 
 void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
@@ -39,10 +39,10 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
 	object3d = Object3d::Create();
 	object3d->Update();
 
-	//Sprite::LoadTexture(2, L"Resources/texture.png");
+	Sprite::LoadTexture(2, L"Resources/texture.png");
 
-	//sprite1 = Sprite::Create(2, { 0,0 });
-	//sprite2 = Sprite::Create(2, { 500,500 }, { 1,0,0,1 }, { 0,0 }, false, true);
+	sprite1 = Sprite::Create(2, { 0,0 });
+	sprite2 = Sprite::Create(2, { 500,500 }, { 1,0,0,1 }, { 0,0 }, false, true);
 }
 
 void GameScene::Update()
@@ -119,7 +119,8 @@ void GameScene::Draw()
 #pragma region 前景スプライト描画
 	// 前景スプライト描画前処理
 	Sprite::PreDraw(cmdList);
-	spriteBG->Draw();
+//	sprite1->Draw();
+//	sprite2->Draw();
 	/// <summary>
 	/// ここに前景スプライトの描画処理を追加できる
 	/// </summary>
