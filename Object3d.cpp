@@ -38,7 +38,6 @@ D3D12_INDEX_BUFFER_VIEW Object3d::ibView{};
 //unsigned short Object3d::indices[planeCount * 3];
 std::vector<Object3d::VertexPosNormalUv>Object3d::vertices;
 std::vector<unsigned short> Object3d::indices;
-Object3d::Material Object3d::material;
 
 void Object3d::StaticInitialize(ID3D12Device * device, int window_width, int window_height)
 {
@@ -186,7 +185,7 @@ void Object3d::InitializeGraphicsPipeline()
 
 	// 頂点シェーダの読み込みとコンパイル
 	result = D3DCompileFromFile(
-		L"OBJVertexShader.hlsl",	// シェーダファイル名
+		L"Resources/Shaders/BasicVertexShader.hlsl",	// シェーダファイル名
 		nullptr,
 		D3D_COMPILE_STANDARD_FILE_INCLUDE, // インクルード可能にする
 		"main", "vs_5_0",	// エントリーポイント名、シェーダーモデル指定
@@ -209,7 +208,7 @@ void Object3d::InitializeGraphicsPipeline()
 
 	// ピクセルシェーダの読み込みとコンパイル
 	result = D3DCompileFromFile(
-		L"OBJPixelShader.hlsl",	// シェーダファイル名
+		L"Resources/Shaders/BasicPixelShader.hlsl",	// シェーダファイル名
 		nullptr,
 		D3D_COMPILE_STANDARD_FILE_INCLUDE, // インクルード可能にする
 		"main", "ps_5_0",	// エントリーポイント名、シェーダーモデル指定
@@ -297,10 +296,9 @@ void Object3d::InitializeGraphicsPipeline()
 	descRangeSRV.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0 レジスタ
 
 	// ルートパラメータ
-	CD3DX12_ROOT_PARAMETER rootparams[3];
+	CD3DX12_ROOT_PARAMETER rootparams[2];
 	rootparams[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
-	rootparams[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL);
-	rootparams[2].InitAsDescriptorTable(1, &descRangeSRV, D3D12_SHADER_VISIBILITY_ALL);
+	rootparams[1].InitAsDescriptorTable(1, &descRangeSRV, D3D12_SHADER_VISIBILITY_ALL);
 
 	// スタティックサンプラー
 	CD3DX12_STATIC_SAMPLER_DESC samplerDesc = CD3DX12_STATIC_SAMPLER_DESC(0);
@@ -324,57 +322,6 @@ void Object3d::InitializeGraphicsPipeline()
 
 }
 
-void Object3d::LoadMaterial(
-	const std::string& directoryPath,
-	const std::string& filename)
-{
-	//ファイルストリーム
-	std::ifstream file;
-
-	file.open(directoryPath + filename);
-	//ファイルオープン失敗をチェック
-	if (file.fail()) {
-		assert(0);
-	}
-
-	string line;
-	while (getline(file, line)) {
-		std::istringstream line_stream(line);
-
-		string key;
-		getline(line_stream, key, ' ');
-		if (key[0] == '\t') {
-			key.erase(key.begin());
-		}
-
-		if (key == "newmtl") {
-			line_stream >> material.name;
-		}
-		if (key == "Ka") {
-			line_stream >> material.ambient.x;
-			line_stream >> material.ambient.y;
-			line_stream >> material.ambient.z;
-		}
-		if (key == "Kd") {
-			line_stream >> material.diffuse.x;
-			line_stream >> material.diffuse.y;
-			line_stream >> material.diffuse.z;
-		}
-		if (key == "Ks") {
-			line_stream >> material.specular.x;
-			line_stream >> material.specular.y;
-			line_stream >> material.specular.z;
-		}
-		if (key == "map_Kd") {
-
-			line_stream >> material.textureFilename;
-
-			LoadTexture(directoryPath, material.textureFilename);
-		}
-	}
-	file.close();
-}
-
 void Object3d::LoadTexture()
 {
 	HRESULT result = S_FALSE;
@@ -382,14 +329,8 @@ void Object3d::LoadTexture()
 	TexMetadata metadata{};
 	ScratchImage scratchImg{};
 
-	string filepath = directoryPath + filename;
-
-	wchar_t wfilepath[128];
-	int iBufferSize = MultiByteToWideChar(CP_ACP, 0, filepath.c_str(),
-		-1, wfilepath, _countof(wfilepath));
-
 	// WICテクスチャのロード
-	result = LoadFromWICFile( wfilepath, WIC_FLAGS_NONE, &metadata, scratchImg);
+	result = LoadFromWICFile( L"Resources/texture.png", WIC_FLAGS_NONE, &metadata, scratchImg);
 	assert(SUCCEEDED(result));
 
 	ScratchImage mipChain{};
@@ -453,7 +394,6 @@ void Object3d::LoadTexture()
 
 }
 
-
 void Object3d::CreateModel()
 {
 	HRESULT result = S_FALSE;
@@ -462,11 +402,7 @@ void Object3d::CreateModel()
 	std::ifstream file;
 	//obj開く
 //	file.open("Resources/triangle/triangle.obj");
-//	file.open("Resources/triangle_tex/triangle_tex.obj");
-	const string modelname = "triangle_mat";
-	const string filename = modelname + "obj";
-	const string directoryPath = "Resources/"+modelname+"/";
-	file.open(directoryPath + filename);
+	file.open("Resources/triangle_tex/triangle_tex.obj");
 	//ファイルオープン失敗をチェック
 	assert(!file.fail());
 
@@ -541,13 +477,6 @@ void Object3d::CreateModel()
 				//頂点インデックスに追加
 				//indices.emplace_back(indexPosition - 1);
 			}
-		}
-		if (key == "mtllib")
-		{
-			string filename;
-			line_stream >> filename;
-
-			LoadMaterial(directoryPath, filename);
 		}
 	}
 
@@ -625,7 +554,7 @@ bool Object3d::Initialize()
 	CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 	// リソース設定
 	CD3DX12_RESOURCE_DESC resourceDesc =
-		CD3DX12_RESOURCE_DESC::Buffer((sizeof(ConstBufferDataB1) + 0xff) & ~0xff);
+		CD3DX12_RESOURCE_DESC::Buffer((sizeof(ConstBufferData) + 0xff) & ~0xff);
 
 	HRESULT result;
 
@@ -633,7 +562,7 @@ bool Object3d::Initialize()
 	result = device->CreateCommittedResource(
 		&heapProps, // アップロード可能
 		D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&constBuffB1));
+		IID_PPV_ARGS(&constBuff));
 	assert(SUCCEEDED(result));
 
 	return true;
@@ -665,15 +594,11 @@ void Object3d::Update()
 	}
 
 	// 定数バッファへデータ転送
-	ConstBufferDataB1* constMap1 = nullptr;
-	result = constBuffB1->Map(0, nullptr, (void**)&constMap1);
-	constMap1->ambient = material.ambient;
-	constMap1->diffuse = material.diffuse;
-	constMap1->specular = material.specular;
-	constMap1->alpha = material.alpha;
-//	constMap->color = color;
-//	constMap->mat = matWorld * matView * matProjection;	// 行列の合成
-	constBuffB1->Unmap(0, nullptr);
+	ConstBufferData* constMap = nullptr;
+	result = constBuff->Map(0, nullptr, (void**)&constMap);
+	constMap->color = color;
+	constMap->mat = matWorld * matView * matProjection;	// 行列の合成
+	constBuff->Unmap(0, nullptr);
 }
 
 void Object3d::Draw()
@@ -692,10 +617,9 @@ void Object3d::Draw()
 	cmdList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 	// 定数バッファビューをセット
-	cmdList->SetGraphicsRootConstantBufferView(0, constBuffB0->GetGPUVirtualAddress());
-	cmdList->SetGraphicsRootConstantBufferView(1, constBuffB1->GetGPUVirtualAddress());
+	cmdList->SetGraphicsRootConstantBufferView(0, constBuff->GetGPUVirtualAddress());
 	// シェーダリソースビューをセット
-	cmdList->SetGraphicsRootDescriptorTable(2, gpuDescHandleSRV);
+	cmdList->SetGraphicsRootDescriptorTable(1, gpuDescHandleSRV);
 	// 描画コマンド
 	//cmdList->DrawIndexedInstanced(_countof(indices), 1, 0, 0, 0);
 	cmdList->DrawIndexedInstanced((UINT)indices.size(), 1, 0, 0, 0);
