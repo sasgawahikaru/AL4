@@ -58,7 +58,7 @@ void Object3d::StaticInitialize(ID3D12Device * device, int window_width, int win
 	InitializeGraphicsPipeline();
 
 	// テクスチャ読み込み
-	LoadTexture();
+	bool LoadTexture();
 
 	// モデル生成
 	CreateModel();
@@ -187,7 +187,7 @@ void Object3d::InitializeGraphicsPipeline()
 
 	// 頂点シェーダの読み込みとコンパイル
 	result = D3DCompileFromFile(
-		L"Resources/Shaders/OBJBasicVertexShader.hlsl",	// シェーダファイル名
+		L"Resources/Shaders/OBJVertexShader.hlsl",	// シェーダファイル名
 		nullptr,
 		D3D_COMPILE_STANDARD_FILE_INCLUDE, // インクルード可能にする
 		"main", "vs_5_0",	// エントリーポイント名、シェーダーモデル指定
@@ -210,7 +210,7 @@ void Object3d::InitializeGraphicsPipeline()
 
 	// ピクセルシェーダの読み込みとコンパイル
 	result = D3DCompileFromFile(
-		L"Resources/Shaders/OBJBasicPixelShader.hlsl",	// シェーダファイル名
+		L"Resources/Shaders/OBJPixelShader.hlsl",	// シェーダファイル名
 		nullptr,
 		D3D_COMPILE_STANDARD_FILE_INCLUDE, // インクルード可能にする
 		"main", "ps_5_0",	// エントリーポイント名、シェーダーモデル指定
@@ -410,6 +410,8 @@ bool Object3d::LoadTexture(const std::string& directoryPath,
 
 void Object3d::CreateModel()
 {
+
+
 	HRESULT result = S_FALSE;
 
 	//ファイルストリーム
@@ -418,7 +420,7 @@ void Object3d::CreateModel()
 //	file.open("Resources/triangle/triangle.obj");
 //	file.open("Resources/triangle_tex/triangle_tex.obj");
 	const string modelname = "triangle_mat";
-	const string filename = modelname + "obj";
+	const string filename = modelname + ".obj";
 	const string directoryPath = "Resources/" + modelname + "/";
 	file.open(directoryPath + filename);
 	//ファイルオープン失敗をチェック
@@ -436,13 +438,6 @@ void Object3d::CreateModel()
 		string key;
 		getline(line_stream, key, ' ');
 
-		if (key == "mtllib")
-		{
-			string filename;
-			line_stream >> filename;
-
-			LoadMaterial(directoryPath, filename);
-		}
 		//先頭文字列がvなら頂点座標
 		if (key == "v") {
 			//X,Y,Z座標読み込み
@@ -503,6 +498,13 @@ void Object3d::CreateModel()
 				//頂点インデックスに追加
 				//indices.emplace_back(indexPosition - 1);
 			}
+		}
+		if (key == "mtllib")
+		{
+			string filename;
+			line_stream >> filename;
+
+			LoadMaterial(directoryPath, filename);
 		}
 	}
 	file.close();
@@ -616,18 +618,25 @@ void Object3d::UpdateViewMatrix()
 
 bool Object3d::Initialize()
 {
-	HRESULT result;
+	
 	// nullptrチェック
 	assert(device);
-
+	HRESULT result;
 	// ヒーププロパティ
 	CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 	// リソース設定
 	CD3DX12_RESOURCE_DESC resourceDesc =
-	CD3DX12_RESOURCE_DESC::Buffer((sizeof(ConstBufferDataB1) +
-		0xff) & ~0xff);
+	CD3DX12_RESOURCE_DESC::Buffer((sizeof(ConstBufferDataB1) +0xff) & ~0xff);
 
-
+	// 定数バッファの生成
+	result = device->CreateCommittedResource(
+		&heapProps, // アップロード可能
+		D3D12_HEAP_FLAG_NONE,
+		&resourceDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&constBuffB0));
+	assert(SUCCEEDED(result));
 
 	// 定数バッファの生成
 	result = device->CreateCommittedResource(
@@ -666,6 +675,13 @@ void Object3d::Update()
 		// 親オブジェクトのワールド行列を掛ける
 		matWorld *= parent->matWorld;
 	}
+
+	// 定数バッファへデータ転送
+	ConstBufferDataB0* constMap = nullptr;
+	result = constBuffB0->Map(0, nullptr, (void**)&constMap);
+//	constMap->color = color;
+	constMap->mat = matWorld * matView * matProjection;	// 行列の合成
+	constBuffB0->Unmap(0, nullptr);
 
 	// 定数バッファへデータ転送
 	ConstBufferDataB1* constMap1 = nullptr;

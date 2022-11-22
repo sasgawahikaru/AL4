@@ -63,7 +63,6 @@ public: // サブクラス
 		XMFLOAT3 specular;
 		float alpha;
 	};
-	static Material material;
 
 private: // 定数
 	static const int division = 50;					// 分割数
@@ -172,6 +171,7 @@ private: // 静的メンバ変数
 	//static unsigned short indices[planeCount * 3];
 	static std::vector<unsigned short> indices;
 
+	static Material material;
 private:// 静的メンバ関数
 	/// <summary>
 	/// デスクリプタヒープの初期化
@@ -195,7 +195,7 @@ private:// 静的メンバ関数
 	/// テクスチャ読み込み
 	/// </summary>
 
-	static void LoadTexture();
+//	static void LoadTexture();
 
 	static bool LoadTexture(const std::string& directoryPath, const std::string& filename);
 
