@@ -5,6 +5,7 @@
 #include "Input.h"
 #include "Sprite.h"
 #include "Object3d.h"
+#include "Model.h"
 #include "DebugText.h"
 
 /// <summary>
@@ -61,8 +62,21 @@ private: // メンバ変数
 	/// </summary>
 	Sprite* spriteBG = nullptr;
 	Object3d* object3d = nullptr;
+	Object3d* object3d1 = nullptr;
 
 	Sprite* sprite1 = nullptr;
 	Sprite* sprite2 = nullptr;
+
+//	Model* modelSkydome = nullptr;
+//	Model* modelGround = nullptr;
+//	Model* modelFighter = nullptr;
+
+//	Object3d* objSkydome = nullptr;
+//	Object3d* objGround = nullptr;
+//	Object3d* objFighter1 = nullptr;
+//	Object3d* objFighter2 = nullptr;
+
+//	Model* modelSphere = nullptr;
+//	Object3d* objSphere = nullptr;
 };
 

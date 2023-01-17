@@ -252,5 +252,7 @@ private: // メンバ変数
 	XMMATRIX matWorld;
 	// 親オブジェクト
 	Object3d* parent = nullptr;
+
+	//Model* model = nullptr;
 };
 

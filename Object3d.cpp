@@ -1,4 +1,5 @@
 #include "Object3d.h"
+#include "Model.h"
 #include <d3dcompiler.h>
 #include <DirectXTex.h>
 #include <fstream>
@@ -419,7 +420,8 @@ void Object3d::CreateModel()
 	//obj開く
 //	file.open("Resources/triangle/triangle.obj");
 //	file.open("Resources/triangle_tex/triangle_tex.obj");
-	const string modelname = "triangle_mat";
+	//const string modelname = "boss1";
+	const string modelname = "boss1";
 	const string filename = modelname + ".obj";
 	const string directoryPath = "Resources/" + modelname + "/";
 	file.open(directoryPath + filename);
@@ -693,12 +695,19 @@ void Object3d::Update()
 	constBuffB1->Unmap(0, nullptr);
 }
 
+//void Model::Draw()
+//{
+//
+//}
 void Object3d::Draw()
 {
 	// nullptrチェック
 	assert(device);
 	assert(Object3d::cmdList);
-		
+
+	//if (model == nullptr) {
+	//	return;
+	//}
 	// 頂点バッファの設定
 	cmdList->IASetVertexBuffers(0, 1, &vbView);
 	// インデックスバッファの設定
@@ -716,4 +725,5 @@ void Object3d::Draw()
 	// 描画コマンド
 	//cmdList->DrawIndexedInstanced(_countof(indices), 1, 0, 0, 0);
 	cmdList->DrawIndexedInstanced((UINT)indices.size(), 1, 0, 0, 0);
+	//model->Draw(CommandList);
 }

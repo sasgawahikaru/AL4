@@ -11,9 +11,15 @@ GameScene::~GameScene()
 {
 	delete spriteBG;
 	delete object3d;
+	delete object3d1;
 
 	delete sprite1;
 	delete sprite2;
+
+	//delete objFighter1;
+	//delete objFighter2;
+
+	//delete modelFighter;
 }
 
 void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
@@ -38,15 +44,40 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
 	// 3Dオブジェクト生成
 	object3d = Object3d::Create();
 	object3d->Update();
+	object3d1 = Object3d::Create();
+	object3d1->Update();
+
+	//objSkydome = Object3d::Create();
+	//objGround = Object3d::Create();
+	//objFighter = Object3d::Create();
 
 	Sprite::LoadTexture(2, L"Resources/texture.png");
 
 	sprite1 = Sprite::Create(2, { 0,0 });
 	sprite2 = Sprite::Create(2, { 500,500 }, { 1,0,0,1 }, { 0,0 }, false, true);
+
+	//modelSkydome = Model::CreateFromOBJ("skydome");
+	//modelGround = Model::CreateFromOBJ("ground");
+	//modelSphere = Model::CreateFromOBJ("sphere");
+
+	//objSkydome->SetModel(modelSkydome);
+	//objGround->SetModel(modelGround);
+	//objFighter->SetModel(modelFighter);
+
+	//modelFighter = Model::CreateFromOBJ("Fighter");
+
+	//objFighter1 = Object3d::Create();
+	//objFighter2 = Object3d::Create();
+
+	//objFighter1->SetModel(modelFighter);
+	//objFighter2->SetModel(modelFighter);
 }
 
 void GameScene::Update()
 {
+	//objFighter1->Update();
+	//objFighter2->Update();
+
 	// オブジェクト移動
 	if (input->PushKey(DIK_UP) || input->PushKey(DIK_DOWN) || input->PushKey(DIK_RIGHT) || input->PushKey(DIK_LEFT))
 	{
@@ -61,6 +92,20 @@ void GameScene::Update()
 
 		// 座標の変更を反映
 		object3d->SetPosition(position);
+	}
+	if (input->PushKey(DIK_UP) || input->PushKey(DIK_DOWN) || input->PushKey(DIK_RIGHT) || input->PushKey(DIK_LEFT))
+	{
+		// 現在の座標を取得
+		XMFLOAT3 position = object3d1->GetPosition();
+
+		// 移動後の座標を計算
+		if (input->PushKey(DIK_UP)) { position.y += 1.0f; }
+		else if (input->PushKey(DIK_DOWN)) { position.y -= 1.0f; }
+		if (input->PushKey(DIK_RIGHT)) { position.x -= 1.0f; }
+		else if (input->PushKey(DIK_LEFT)) { position.x += 1.0f; }
+
+		// 座標の変更を反映
+		object3d1->SetPosition(position);
 	}
 
 	// カメラ移動
@@ -78,6 +123,7 @@ void GameScene::Update()
 }
 
 	object3d->Update();
+	object3d1->Update();
 }
 
 void GameScene::Draw()
@@ -89,7 +135,7 @@ void GameScene::Draw()
 	// 背景スプライト描画前処理
 	Sprite::PreDraw(cmdList);
 	// 背景スプライト描画
-	spriteBG->Draw();
+	//spriteBG->Draw();
 
 	/// <summary>
 	/// ここに背景スプライトの描画処理を追加できる
@@ -107,7 +153,9 @@ void GameScene::Draw()
 
 	// 3Dオブクジェクトの描画
 	object3d->Draw();
-
+	object3d1->Draw();
+	//objFighter1->Draw();
+	//objFighter2->Draw();
 	/// <summary>
 	/// ここに3Dオブジェクトの描画処理を追加できる
 	/// </summary>
